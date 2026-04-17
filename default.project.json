@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "RateLimiter": {
-        "$path": "src/RateLimiter"
+        "$path": "src"
       }
     },
 
