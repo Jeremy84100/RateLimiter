@@ -7,4 +7,17 @@ license = "MIT"
 realm = "server"
 registry = "https://github.com/UpliftGames/wally-index"
 
+# Entry point for the package
+main = "src/RateLimiter/init.lua"
+
+# Exclude development/test files from the final package
+exclude = [
+    "src/shared/**",
+    ".agents/**",
+    ".gemini/**",
+    "skills-lock.json",
+    "default.project.json",
+    "aftman.toml"
+]
+
 [dependencies]
