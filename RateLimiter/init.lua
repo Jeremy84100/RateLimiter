@@ -532,7 +532,5 @@ function GlobalLimiter:ExecuteAsync(func: (...any) -> ...any, ...: any): boolean
 end
 
 
--- Expose the wrapper directly from the main module
-RateManager.RemoteProtector = require(script.RemoteProtector)
 
 return RateManager
