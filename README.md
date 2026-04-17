@@ -32,7 +32,7 @@
 Add this to your `wally.toml`:
 ```toml
 [dependencies]
-RateLimiter = "ifloxiei/ratelimiter@3.2.0"
+RateLimiter = "jeremy84100/ratelimiter@3.2.0"
 ```
 
 ### Manual
