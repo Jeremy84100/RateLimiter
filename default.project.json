@@ -6,13 +6,13 @@
 
     "ReplicatedStorage": {
       "RateLimiter": {
-        "$path": "RateLimiter"
+        "$path": "src"
       }
     },
 
     "ServerScriptService": {
       "StressTest": {
-        "$path": "RateLimiter/shared/StressTest.server.lua"
+        "$path": "src/shared/StressTest.server.lua"
       }
     },
 

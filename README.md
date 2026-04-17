@@ -4,7 +4,7 @@
   # RateLimiter
   *High-performance, engine-grade security for Roblox backends*
 
-  [![Version](https://img.shields.io/badge/version-3.2.5-blue?style=flat-square)](https://github.com/Jeremy84100/RateLimiter)
+  [![Version](https://img.shields.io/badge/version-3.2.7-blue?style=flat-square)](https://github.com/Jeremy84100/RateLimiter)
   [![Platform](https://img.shields.io/badge/Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://roblox.com)
   [![Luau](https://img.shields.io/badge/Luau-Strict-FF5A0E?style=flat-square)](https://luau-lang.org)
   [![Performance](https://img.shields.io/badge/Performance-Zero--Allocation-brightgreen?style=flat-square)](https://github.com/Jeremy84100/RateLimiter)
@@ -32,7 +32,7 @@
 Add this to your `wally.toml`:
 ```toml
 [dependencies]
-RateLimiter = "jeremy84100/ratelimiter@3.2.5"
+RateLimiter = "jeremy84100/ratelimiter@3.2.7"
 ```
 
 ### Manual

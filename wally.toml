@@ -1,20 +1,20 @@
 [package]
 name = "jeremy84100/ratelimiter"
-version = "3.2.5"
+version = "3.2.7"
 description = "Hardened, zero-allocation O(1) RateLimiter engine for Roblox."
 authors = ["IFloXieI <https://github.com/Jeremy84100>"]
 license = "MIT"
 realm = "server"
 registry = "https://github.com/UpliftGames/wally-index"
 
-# Point directly to the core folder
-main = "RateLimiter/init.lua"
+# On pointe vers le src/ proprement
+main = "src/init.lua"
 
-# Exclude non-essential files
+# On exclut ce qui n'est pas du code source
 exclude = [
-    "RateLimiter/shared/**",
-    "RateLimiter/server/**",
-    "RateLimiter/client/**",
+    "src/shared/**",
+    "src/server/**",
+    "src/client/**",
     ".agents/**",
     ".gemini/**",
     "skills-lock.json",
@@ -22,7 +22,8 @@ exclude = [
     "aftman.toml",
     "*.lock",
     ".github/**",
-    "tests/**"
+    "tests/**",
+    "StressTest.server.lua"
 ]
 
 [dependencies]
