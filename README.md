@@ -28,16 +28,10 @@
 
 ## Installation
 
-### Wally (Recommended)
-Add this to your `wally.toml`:
-```toml
-[dependencies]
-RateLimiter = "jeremy84100/ratelimiter@3.2.7"
-```
-
 ### Manual
-1. Download the latest release from the repository.
-2. Place the `RateLimiter` module into `ServerStorage` or `ReplicatedStorage`.
+1. Clone this repository or download the latest release.
+2. Place the contents of the `src` folder into a ModuleScript named `RateLimiter`.
+3. Locate `RateLimiter` in `ServerStorage` or `ReplicatedStorage`.
 
 ## Quick Start
 
