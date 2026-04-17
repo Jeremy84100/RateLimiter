@@ -1,8 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/rojo-rbx/rojo/master/periphery/project-schema.json",
   "name": "RateLimiter",
-
   "tree": {
+
     "$className": "DataModel",
 
     "ReplicatedStorage": {

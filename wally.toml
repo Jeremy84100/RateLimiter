@@ -1,8 +1,10 @@
 [package]
-name = "krazeems/rate-limiter"
-description = "A powerful, optimized and secure RateLimiter for Roblox Lua."
-version = "1.0.0"
+name = "ifloxiei/ratelimiter"
+version = "3.2.0"
+description = "Hardened, zero-allocation O(1) RateLimiter engine for Roblox."
+authors = ["IFloXieI <https://github.com/Jeremy84100>"]
+license = "MIT"
+realm = "server"
 registry = "https://github.com/UpliftGames/wally-index"
-realm = "shared"
 
 [dependencies]
