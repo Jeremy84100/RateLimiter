@@ -1,0 +1,22 @@
+# Project place file
+/RateLimiter.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+# Tools & Metadata
+sourcemap.json
+skills-lock.json
+.agents/
+.gemini/
+*.lock.json
+
+# Wally/Dependencies (Standard for libraries)
+/Packages/
+/ServerPackages/
+/DevPackages/
+
+# System files
+.DS_Store
+Thumbs.db

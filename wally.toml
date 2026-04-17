@@ -1,0 +1,8 @@
+[package]
+name = "krazeems/rate-limiter"
+description = "A powerful, optimized and secure RateLimiter for Roblox Lua."
+version = "1.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
