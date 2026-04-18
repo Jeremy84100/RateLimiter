@@ -12,7 +12,7 @@
 
     "ServerScriptService": {
       "StressTest": {
-        "$path": "src/shared/StressTest.server.lua"
+        "$path": "src/tests/StressTest.server.luau"
       }
     },
 
