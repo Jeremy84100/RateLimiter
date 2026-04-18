@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg" width="96" alt="RateLimiter logo">
+  <img src="banner.jpg" width="100%" alt="RateLimiter Banner">
 
   # RateLimiter
   *High-performance, engine-grade security for Roblox backends*
