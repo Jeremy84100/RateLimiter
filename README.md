@@ -1,7 +1,6 @@
 <div align="center">
   <img src="banner.jpg" width="100%" alt="RateLimiter Banner">
 
-  # RateLimiter
   *High-performance, engine-grade security for Roblox backends*
 
   [![Version](https://img.shields.io/badge/version-3.2.7-blue)](https://github.com/Jeremy84100/RateLimiter)
