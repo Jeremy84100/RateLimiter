@@ -1,4 +1,10 @@
 --!strict
+--!native
+--!optimize 2
+--[[
+    @title Token Bucket Limiter
+    @summary Efficient token bucket algorithm for burst handling and weighted requests.
+]]
 local os_clock = os.clock
 
 local TokenBucket = {}
@@ -10,7 +16,8 @@ export type TokenBucketInstance = {
     _tokens: number,
     _lastRefill: number,
     
-    Consume: (self: TokenBucketInstance, cost: number?, now: number?) -> boolean,
+    Consume: (self: TokenBucketInstance, cost: number?, now: number?, peek: boolean?) -> boolean,
+    SetCapacity: (self: TokenBucketInstance, maxTokens: number, refillRate: number) -> (),
     ResetState: (self: TokenBucketInstance) -> (),
 }
 
@@ -25,31 +32,65 @@ function TokenBucket.new(maxTokens: number, refillRatePerSecond: number): TokenB
     return self
 end
 
-function TokenBucket:Consume(cost: number?, now: number?): boolean
-    local currentTime = now or os_clock()
-    local requestedCost = cost or 1
+function TokenBucket:Consume(cost: number?, now: number?, peek: boolean?): boolean
+    local actualCost: number = cost or 1
     
-    -- 1. Calcul du remplissage (Replenishment)
-    local elapsed = currentTime - self._lastRefill
-    local refill = elapsed * self._refillRate
+    -- Immediate rejection of invalid/negative costs to prevent exploits
+    if actualCost < 1 then
+        return false
+    end
+
+    local actualNow: number = now or os_clock()
+    
+    -- Local cache to minimize table lookups
+    local maxTokens = self._max
+    local currentTokens = self._tokens
+    local lastRefill = self._lastRefill
+
+    local refill = (actualNow - lastRefill) * self._refillRate
     
     if refill > 0 then
-        self._tokens = math.min(self._max, self._tokens + refill)
-        self._lastRefill = currentTime
+        currentTokens += refill
+        if currentTokens > maxTokens then
+            currentTokens = maxTokens
+        end
     end
     
-    -- 2. Vérification de la capacité
-    if self._tokens >= requestedCost then
-        self._tokens -= requestedCost
+    if currentTokens >= actualCost then
+        if peek then return true end
+        
+        self._tokens = currentTokens - actualCost
+        self._lastRefill = actualNow
         return true
     end
     
     return false
 end
 
+function TokenBucket:SetCapacity(maxTokens: number, refillRate: number)
+    -- Settle the balance using the current rate before updating to prevent retroactive errors
+    local now = os_clock()
+    local elapsed = now - self._lastRefill
+    
+    if elapsed > 0 then
+        local currentTokens = self._tokens + (elapsed * self._refillRate)
+        self._tokens = if currentTokens > self._max then self._max else currentTokens
+    end
+    
+    self._lastRefill = now
+
+    -- Apply new constraints and ensure current tokens do not exceed the new maximum
+    self._max = maxTokens
+    self._refillRate = refillRate
+    self._tokens = if self._tokens > maxTokens then maxTokens else self._tokens
+end
+
 function TokenBucket:ResetState()
     self._tokens = self._max
     self._lastRefill = os_clock()
 end
+
+-- Freeze the prototype to enable maximum inline caching and VM optimizations
+table.freeze(TokenBucket)
 
 return TokenBucket
