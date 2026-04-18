@@ -1,117 +1,128 @@
 --!strict
-
---[[
-    @title RemoteProtector
-    @summary A wrapper for RateManager to handle per-player RemoteEvent protection.
-]]
-
 local Players = game:GetService("Players")
-local RateManager = require(script.Parent)
-
-type RateManagerInstance = RateManager.RateManagerInstance
-
-export type RemoteProtectorInstance = {
-    _maxCalls: number,
-    _perSeconds: number,
-    _punishHits: number?,
-    _punishDurations: {number}?,
-    _playerLimiters: { [Player]: RateManagerInstance },
-    _connections: {RBXScriptConnection},
-    _playerRemovingConn: RBXScriptConnection?,
-    
-    Connect: (self: RemoteProtectorInstance, remoteEvent: RemoteEvent, callback: (Player, ...any) -> ()) -> RBXScriptConnection,
-    SetCapacity: (self: RemoteProtectorInstance, maxCalls: number, perSeconds: number?) -> (),
-    SetPunishment: (self: RemoteProtectorInstance, threshold: number, durations: number | {number}) -> (),
-    Destroy: (self: RemoteProtectorInstance) -> (),
-}
+local MemoryStoreService = game:GetService("MemoryStoreService")
+local os_clock = os.clock
+local os_time = os.time
 
 local RemoteProtector = {}
 RemoteProtector.__index = RemoteProtector
 
-function RemoteProtector.new(maxCalls: number, perSeconds: number, punishHits: number?, punishDuration: (number | {number})?): RemoteProtectorInstance
-    -- Security Asserts (Fail-Fast)
-    assert(type(maxCalls) == "number" and maxCalls > 0, "maxCalls must be a number > 0")
-    assert(type(perSeconds) == "number" and perSeconds > 0, "perSeconds must be a number > 0")
+export type RemoteProtectorInstance = {
+    _limiterFactory: () -> any,
+    _pool: {any},
+    _activeLimiters: { [Player]: any },
+    _punishThreshold: number,
+    _punishDurations: {number},
     
+    _persistencePrefix: string?,
+    _store: any?,
+    
+    _playerData: { [Player]: { hits: number, timeoutUntil: number, escalation: number, isLoading: boolean? } },
+    _cleaningConn: RBXScriptConnection?,
+    
+    Consume: (self: RemoteProtectorInstance, player: Player, cost: number?) -> boolean,
+    EnablePersistence: (self: RemoteProtectorInstance, keyPrefix: string) -> (),
+    Destroy: (self: RemoteProtectorInstance) -> (),
+}
+
+function RemoteProtector.new(limiterFactory: () -> any, punishThreshold: number?, punishDurations: {number}?): RemoteProtectorInstance
     local self = setmetatable({} :: any, RemoteProtector)
     
-    -- Fast direct variables instead of tables
-    self._maxCalls = maxCalls
-    self._perSeconds = perSeconds
-    self._punishHits = punishHits
-    self._punishDurations = type(punishDuration) == "table" and punishDuration or (punishDuration and {punishDuration} or nil)
+    self._limiterFactory = limiterFactory
+    self._pool = {}
+    self._activeLimiters = {}
+    self._playerData = {}
     
-    self._playerLimiters = {}
-    self._connections = {}
+    self._punishThreshold = punishThreshold or 5
+    self._punishDurations = punishDurations or {10, 60, 300}
     
-    -- Automatic cleanup to prevent memory leaks
-    self._playerRemovingConn = Players.PlayerRemoving:Connect(function(player: Player)
-        if self._playerLimiters[player] then
-            self._playerLimiters[player]:Destroy()
-            self._playerLimiters[player] = nil
+    self._cleaningConn = Players.PlayerRemoving:Connect(function(player: Player)
+        -- 1. Sauvegarde Persistence avant le nettoyage
+        if self._persistencePrefix and self._store then
+            local data = self._playerData[player]
+            if data and (data.timeoutUntil > os_clock() or data.escalation > 1) then
+                local timeoutRemaining = math.max(0, math.floor(data.timeoutUntil - os_clock()))
+                pcall(function()
+                    self._store:SetAsync(self._persistencePrefix .. "_" .. player.UserId, {
+                        timeoutEnd = os_time() + timeoutRemaining,
+                        escalation = data.escalation
+                    }, 86400) -- Expire après 24h
+                end)
+            end
         end
+
+        -- 2. Recyclage du Limiteur
+        local limiter = self._activeLimiters[player]
+        if limiter then
+            if limiter.ResetState then limiter:ResetState() end
+            table.insert(self._pool, limiter)
+            self._activeLimiters[player] = nil
+        end
+        self._playerData[player] = nil
     end)
     
     return self
 end
 
-function RemoteProtector:Connect(remoteEvent: RemoteEvent, callback: (Player, ...any) -> ()): RBXScriptConnection
-    assert(typeof(remoteEvent) == "Instance" and remoteEvent:IsA("RemoteEvent"), "RemoteProtector:Connect expects a RemoteEvent")
+function RemoteProtector:EnablePersistence(keyPrefix: string)
+    self._persistencePrefix = keyPrefix
+    self._store = MemoryStoreService:GetSortedMap("RateLimiter_Persistence")
+end
+
+function RemoteProtector:Consume(player: Player, cost: number?): boolean
+    local now = os_clock()
+    local data = self._playerData[player]
     
-    local conn = remoteEvent.OnServerEvent:Connect(function(player: Player, ...)
-        local limiter = self._playerLimiters[player]
+    if not data then
+        data = { hits = 0, timeoutUntil = 0, escalation = 1, isLoading = false }
+        self._playerData[player] = data
         
-        if not limiter then
-            limiter = RateManager.new(self._maxCalls, self._perSeconds, RateManager.Mode.RateLimit)
-            
-            if self._punishHits and self._punishDurations then
-                limiter:SetPunishment(self._punishHits, self._punishDurations)
-            end
-            
-            self._playerLimiters[player] = limiter
+        -- Load asynchrone si persistence active
+        if self._persistencePrefix and self._store then
+            data.isLoading = true
+            task.spawn(function()
+                local success, persisted = pcall(function()
+                    return self._store:GetAsync(self._persistencePrefix .. "_" .. (player.UserId :: any))
+                end)
+                if success and persisted and data then
+                    local timeRemaining = persisted.timeoutEnd - os_time()
+                    if timeRemaining > 0 then
+                        data.timeoutUntil = os_clock() + timeRemaining
+                    end
+                    data.escalation = persisted.escalation or 1
+                end
+                data.isLoading = false
+            end)
         end
-        
-        -- Low-overhead execution: Validates the player's rate limit before firing the callback.
-        -- Uses direct argument passing to avoid closures and table allocations.
-        limiter:Execute(callback, player, ...)
-    end)
-    
-    table.insert(self._connections, conn)
-    return conn
-end
-
-function RemoteProtector:SetCapacity(maxCalls: number, perSeconds: number?)
-    self._maxCalls = maxCalls
-    self._perSeconds = perSeconds or self._perSeconds
-    for _, limiter in self._playerLimiters do
-        limiter:SetCapacity(maxCalls, perSeconds)
     end
-end
-
-function RemoteProtector:SetPunishment(threshold: number, durations: number | {number})
-    self._punishHits = threshold
-    self._punishDurations = type(durations) == "table" and durations or {durations}
-    for _, limiter in self._playerLimiters do
-        limiter:SetPunishment(threshold, self._punishDurations)
+    
+    if now < data.timeoutUntil then return false end
+    
+    local limiter = self._activeLimiters[player]
+    if not limiter then
+        limiter = table.remove(self._pool) or self._limiterFactory()
+        self._activeLimiters[player] = limiter
+    end
+    
+    if limiter:Consume(cost, now) then
+        data.hits = 0 
+        return true
+    else
+        data.hits += 1
+        if data.hits >= self._punishThreshold then
+            local duration = self._punishDurations[data.escalation] or self._punishDurations[#self._punishDurations]
+            data.timeoutUntil = now + duration
+            data.hits = 0
+            if data.escalation < #self._punishDurations then data.escalation += 1 end
+        end
+        return false
     end
 end
 
 function RemoteProtector:Destroy()
-    if self._playerRemovingConn then
-        self._playerRemovingConn:Disconnect()
-        self._playerRemovingConn = nil
-    end
-    
-    for _, conn in self._connections do
-        if conn.Connected then conn:Disconnect() end
-    end
-    table.clear(self._connections)
-    
-    for _, limiter in self._playerLimiters do
-        limiter:Destroy()
-    end
-    
-    -- Ultimate memory sweep
+    if self._cleaningConn then self._cleaningConn:Disconnect() end
+    table.clear(self._activeLimiters)
+    table.clear(self._pool)
     table.clear(self :: any)
 end
 
