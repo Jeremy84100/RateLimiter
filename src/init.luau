@@ -1,6 +1,6 @@
 --!strict
 --[[
-    @title RateLimiter V4
+    @title RateLimiter V4.0.1
     @author @Jeremy84100
     @license MIT
     
