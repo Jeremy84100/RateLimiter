@@ -1,6 +1,4 @@
 --!strict
---!native
---!optimize 2
 --[[
     @title RateLimiter V4
     @author @Jeremy84100

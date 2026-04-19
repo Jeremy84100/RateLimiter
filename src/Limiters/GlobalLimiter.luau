@@ -1,6 +1,4 @@
 --!strict
---!native
---!optimize 2
 --[[
     @title Global Limiter
     @summary Distributed cross-server rate limiting using MemoryStoreService.
