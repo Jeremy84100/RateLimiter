@@ -3,7 +3,7 @@
 
   *High-performance, engine-grade security for Roblox backends*
 
-  [![Version](https://img.shields.io/badge/version-4.0.2-blue)](https://github.com/Jeremy84100/RateLimiter)
+  [![Version](https://img.shields.io/badge/version-4.0.3-blue)](https://github.com/Jeremy84100/RateLimiter)
   [![Platform](https://img.shields.io/badge/Roblox-00A2FF?logo=roblox&logoColor=white)](https://roblox.com)
   [![Luau](https://img.shields.io/badge/Luau-Strict-FF5A0E)](https://luau-lang.org)
   [![Performance](https://img.shields.io/badge/Performance-Zero--Allocation-brightgreen)](https://github.com/Jeremy84100/RateLimiter)
@@ -15,7 +15,7 @@
 
 </div>
 
-**RateLimiter V4.0.2** is a strictly-typed, synchronous security framework designed for Roblox environments requiring extreme performance. It replaces traditional $O(n)$ memory-heavy loops with pure mathematical algorithms and a **True $O(1)$ Circular Buffer**, ensuring constant execution time even under massive request volumes. Zero yielding, zero thread exhaustion.
+**RateLimiter V4.0.3** is a strictly-typed, synchronous security framework designed for Roblox environments requiring extreme performance. It replaces traditional $O(n)$ memory-heavy loops with pure mathematical algorithms and a **True $O(1)$ Circular Buffer**, ensuring constant execution time even under massive request volumes. Zero yielding, zero thread exhaustion.
 
 ## Key Features
 

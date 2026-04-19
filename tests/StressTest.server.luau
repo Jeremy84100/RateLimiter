@@ -1,13 +1,13 @@
 --!strict
 -- tests/StressTest.server.luau
 --[[
-    @title StressTest V4.0.2
-    @summary Performance, memory, and security validation for RateLimiter V4.0.2.
+    @title StressTest V4.0.3
+    @summary Performance, memory, and security validation for RateLimiter V4.0.3.
 ]]
 
 local RateManager = require(game:GetService("ReplicatedStorage"):WaitForChild("RateLimiter"))
 
-print("\n--- 🔬 STARTING STRESS TEST LABORATORY V4.0.2 ---")
+print("\n--- 🔬 STARTING STRESS TEST LABORATORY V4.0.3 ---")
 
 local mockPlayer = { UserId = 12345, Name = "MockPlayer" } :: any
 

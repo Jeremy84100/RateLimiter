@@ -16,6 +16,10 @@ export type GlobalLimiterInstance = {
     _window: number,
     _store: any, -- MemoryStoreSortedMap
     
+    -- Anti-spam / Quota Protection
+    _lastNetworkCall: number,
+    _localViolations: number,
+
     ConsumeAsync: (self: GlobalLimiterInstance) -> boolean,
 }
 
@@ -31,6 +35,9 @@ function GlobalLimiter.new(key: string, limit: number, windowSeconds: number): G
     self._window = windowSeconds
     self._store = MemoryStoreService:GetSortedMap("GlobalRateLimiter")
     
+    self._lastNetworkCall = 0
+    self._localViolations = 0
+
     return self
 end
 
@@ -39,6 +46,21 @@ end
     @returns true if permitted, false if limit reached or Roblox services are saturated.
 ]]
 function GlobalLimiter:ConsumeAsync(): boolean
+    -- SECURITY: Local Throttle to protect Roblox Quotas.
+    -- If local calls exceed an absurd rate (e.g. exploiters spamming Remotes),
+    -- we block them in RAM instantly instead of asking MemoryStore.
+    local nowClock = os_clock()
+    if nowClock - self._lastNetworkCall < 0.1 then
+        self._localViolations += 1
+        -- Allow minor bursts of up to 5 concurrent local requests before dropping to protect quota
+        if self._localViolations > 5 then
+            return false 
+        end
+    else
+        self._localViolations = 0
+    end
+    self._lastNetworkCall = nowClock
+
     local result = false
     
     -- pcall is mandatory as MemoryStore operations can fail (network errors or quota limits)
